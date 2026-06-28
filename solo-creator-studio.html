@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solo Creator Studio</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222; --surface3: #2a2a2a;
+    --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+    --text: #f0f0f0; --text-secondary: #999; --text-muted: #555;
+    --accent: #e63946; --accent-bg: rgba(230,57,70,0.12); --accent-border: rgba(230,57,70,0.3);
+    --green: #2dc653; --green-bg: rgba(45,198,83,0.1);
+    --amber: #f4a261; --amber-bg: rgba(244,162,97,0.1);
+    --radius: 8px; --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 0; flex-shrink: 0; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; overflow-y: auto; }
+  .main { flex: 1; overflow: auto; }
+  .logo { padding: 0 1.25rem 1.25rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+  .logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo-mark i { font-size: 18px; color: white; }
+  .logo-text { font-size: 14px; font-weight: 600; }
+  .logo-sub { font-size: 10px; color: var(--text-muted); }
+  .nav-section { padding: 0 0.75rem; margin-bottom: 0.5rem; }
+  .nav-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 0 0.5rem; margin-bottom: 0.25rem; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 0.5rem 0.75rem; border-radius: var(--radius); color: var(--text-secondary); font-size: 13px; cursor: pointer; transition: all 0.15s; margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+  .nav-item i { font-size: 17px; }
+  .content { padding: 2rem; max-width: 920px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { margin-bottom: 1.75rem; }
+  .page-title { font-size: 22px; font-weight: 600; margin-bottom: 0.2rem; }
+  .page-desc { color: var(--text-secondary); font-size: 13.5px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .card-title { font-size: 13.5px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .card-title i { color: var(--accent); font-size: 16px; }
+
+  /* Steps */
+  .steps { display: flex; align-items: center; margin-bottom: 1.75rem; }
+  .step { display: flex; align-items: center; gap: 8px; }
+  .step-num { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
+  .step.done .step-num { background: var(--green); border-color: var(--green); color: white; }
+  .step.active .step-num { background: var(--accent); border-color: var(--accent); color: white; }
+  .step-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+  .step.active .step-label { color: var(--text); }
+  .step.done .step-label { color: var(--green); }
+  .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 10px; }
+
+  /* Form */
+  label { font-size: 12.5px; color: var(--text-secondary); display: block; margin-bottom: 0.35rem; }
+  input[type=text], input[type=number], textarea, select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border-strong); border-radius: var(--radius);
+    color: var(--text); font-family: var(--font); font-size: 14px; padding: 0.55rem 0.9rem; outline: none; transition: border-color 0.15s; resize: vertical;
+  }
+  input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  input[type=number] { -moz-appearance: textfield; }
+  input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  select option { background: var(--surface2); }
+  .field { margin-bottom: 1rem; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+  /* Tag chips with add/remove */
+  .chip-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.35rem; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 0.3rem 0.7rem; border-radius: 20px; border: 1px solid var(--border-strong); font-size: 12.5px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; background: none; font-family: var(--font); user-select: none; }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.selected { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+  .chip .chip-remove { font-size: 14px; line-height: 1; color: inherit; opacity: 0.7; }
+  .chip-add-row { display: flex; gap: 6px; margin-top: 8px; }
+  .chip-add-row input { flex: 1; font-size: 13px; padding: 0.35rem 0.75rem; }
+  .chip-add-row button { padding: 0.35rem 0.75rem; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--surface2); color: var(--text-secondary); cursor: pointer; font-size: 13px; font-family: var(--font); white-space: nowrap; }
+  .chip-add-row button:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 0.55rem 1.1rem; border-radius: var(--radius); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; font-family: var(--font); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #c1121f; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border-strong); }
+  .btn-secondary:hover { background: var(--surface3); }
+  .btn-ghost { background: none; color: var(--text-secondary); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-strong); }
+  .btn-sm { padding: 0.3rem 0.7rem; font-size: 12px; }
+  .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  /* Topic grid */
+  .topic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .topic-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; cursor: pointer; transition: all 0.15s; position: relative; }
+  .topic-card:hover { border-color: var(--border-strong); }
+  .topic-card.picked { border-color: var(--accent); background: var(--accent-bg); }
+  .pick-badge { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); display: none; align-items: center; justify-content: center; }
+  .topic-card.picked .pick-badge { display: flex; }
+  .pick-badge i { font-size: 12px; color: white; }
+  .topic-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.35rem; font-weight: 600; }
+  .topic-title { font-size: 13.5px; font-weight: 500; margin-bottom: 0.35rem; line-height: 1.4; }
+  .topic-hook { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* Script */
+  .script-block { background: var(--surface2); border-radius: 10px; padding: 1.1rem; margin-bottom: 0.75rem; border-left: 3px solid var(--accent); }
+  .script-block-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.4rem; font-weight: 600; }
+  .script-text { font-size: 13.5px; line-height: 1.8; color: var(--text); white-space: pre-wrap; outline: none; min-height: 50px; }
+
+  /* Tone buttons */
+  .tone-btn { padding: 0.3rem 0.8rem; border-radius: 20px; border: 1px solid var(--border-strong); font-size: 12px; color: var(--text-secondary); cursor: pointer; background: none; font-family: var(--font); transition: all 0.15s; }
+  .tone-btn:hover, .tone-btn.active { background: var(--surface3); border-color: var(--border-strong); color: var(--text); }
+
+  /* SEO */
+  .seo-title-row { padding: 0.55rem 0.8rem; background: var(--surface2); border-radius: var(--radius); margin-bottom: 6px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .tag-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+  .kw-tag { padding: 0.25rem 0.65rem; background: var(--surface3); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; color: var(--text-secondary); }
+
+  /* KW analysis */
+  .kw-row { display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+  .kw-row:last-child { border-bottom: none; }
+  .kw-name { font-size: 13.5px; font-weight: 500; }
+
+  /* Outline */
+  .outline-segment { padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+  .outline-segment:last-child { border-bottom: none; }
+  .segment-title { font-size: 13px; font-weight: 500; margin-bottom: 0.2rem; }
+  .segment-dir { font-size: 12.5px; color: var(--text-secondary); }
+
+  /* Spinner */
+  .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-accent { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+  .empty i { font-size: 38px; margin-bottom: 1rem; display: block; }
+  .notif { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface2); border: 1px solid var(--border-strong); border-radius: 10px; padding: 0.7rem 1rem; font-size: 13px; display: flex; align-items: center; gap: 8px; z-index: 99; transform: translateY(12px); opacity: 0; transition: all 0.25s; pointer-events: none; }
+  .notif.show { transform: translateY(0); opacity: 1; }
+  .notif i { color: var(--green); }
+  .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.6rem; font-weight: 500; }
+
+  @media (max-width: 680px) {
+    .sidebar { display: none; }
+    .content { padding: 1rem; }
+    .topic-grid, .field-row, .field-row-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark"><i class="ti ti-video" aria-hidden="true"></i></div>
+      <div>
+        <div class="logo-text">Creator Studio</div>
+        <div class="logo-sub">Solo 的內容助理</div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">工作流程</div>
+      <button class="nav-item active" onclick="switchPage('series')" id="nav-series">
+        <i class="ti ti-list-check" aria-hidden="true"></i> 系列規劃
+      </button>
+      <button class="nav-item" onclick="switchPage('script')" id="nav-script">
+        <i class="ti ti-file-text" aria-hidden="true"></i> 腳本撰寫
+      </button>
+      <button class="nav-item" onclick="switchPage('seo')" id="nav-seo">
+        <i class="ti ti-search" aria-hidden="true"></i> SEO 研究
+      </button>
+    </div>
+    <div style="margin-top: auto; padding: 1rem 1.25rem; border-top: 1px solid var(--border);">
+      <div style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">語氣參考：Will Tennyson<br>頻道定位：台灣男生用運動帶你看世界</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+
+      <!-- SERIES PAGE -->
+      <div class="page active" id="page-series">
+        <div class="page-header">
+          <div class="page-title">系列規劃</div>
+          <div class="page-desc">從一個挑戰主題，規劃完整的系列影片</div>
+        </div>
+
+        <div class="steps">
+          <div class="step active" id="step1"><div class="step-num">1</div><div class="step-label">挑戰設定</div></div>
+          <div class="step-line"></div>
+          <div class="step" id="step2"><div class="step-num">2</div><div class="step-label">選題</div></div>
+          <div class="step-line"></div>
+          <div class="step" id="step3"><div class="step-num">3</div><div class="step-label">大綱</div></div>
+        </div>
+
+        <!-- WIZARD STEP 1 -->
+        <div id="ws1">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1rem;"><i class="ti ti-target" aria-hidden="true"></i> 系列基本設定</div>
+
+            <div class="field">
+              <label>系列主題</label>
+              <input type="text" id="challenge-title" placeholder="例：備戰 Garmin 半馬、8 週增肌計畫" value="備戰 Garmin 半馬">
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label>影片數量</label>
+                <input type="number" id="video-count" placeholder="例：8" value="8" min="1" max="20">
+              </div>
+              <div class="field">
+                <label>系列週期</label>
+                <input type="text" id="series-duration" placeholder="例：12 週、3 個月" value="12 週">
+              </div>
+            </div>
+
+            <div class="field">
+              <label>個人特色 / USP</label>
+              <input type="text" id="usp" placeholder="例：NID 認證教練、健身轉跑步、Hyrox 選手" value="台灣人、健身轉跑步、NID 認證跑步教練、Hyrox 混合訓練選手">
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- AUDIENCE CHIPS -->
+            <div class="field">
+              <div class="card-title" style="margin-bottom:0.75rem; font-size:13px;"><i class="ti ti-users" aria-hidden="true"></i> 目標族群</div>
+              <div class="section-label">選擇或新增（可多選）</div>
+              <div class="chip-group" id="audience-chips">
+                <!-- default chips rendered by JS -->
+              </div>
+              <div class="chip-add-row">
+                <input type="text" id="audience-input" placeholder="自訂受眾，按 Enter 新增" onkeydown="if(event.key==='Enter'){addChip('audience','audience-input');event.preventDefault();}">
+                <button onclick="addChip('audience','audience-input')"><i class="ti ti-plus" aria-hidden="true"></i> 新增</button>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- STYLE CHIPS -->
+            <div class="field">
+              <div class="card-title" style="margin-bottom:0.75rem; font-size:13px;"><i class="ti ti-palette" aria-hidden="true"></i> 內容風格</div>
+              <div class="chip-group" id="style-chips"></div>
+              <div class="chip-add-row">
+                <input type="text" id="style-input" placeholder="自訂風格" onkeydown="if(event.key==='Enter'){addChip('style','style-input');event.preventDefault();}">
+                <button onclick="addChip('style','style-input')"><i class="ti ti-plus" aria-hidden="true"></i> 新增</button>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- DIFFICULTY CHIPS -->
+            <div class="field">
+              <div class="card-title" style="margin-bottom:0.75rem; font-size:13px;"><i class="ti ti-flame" aria-hidden="true"></i> 難易程度感受</div>
+              <div class="chip-group" id="level-chips"></div>
+              <div class="chip-add-row">
+                <input type="text" id="level-input" placeholder="自訂難度描述" onkeydown="if(event.key==='Enter'){addChip('level','level-input');event.preventDefault();}">
+                <button onclick="addChip('level','level-input')"><i class="ti ti-plus" aria-hidden="true"></i> 新增</button>
+              </div>
+            </div>
+
+            <div style="margin-top:1.25rem;">
+              <button class="btn btn-primary" id="gen-topics-btn" onclick="generateTopics()">
+                <i class="ti ti-sparkles" aria-hidden="true"></i> 生成主題清單
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- WIZARD STEP 2 -->
+        <div id="ws2" style="display:none;">
+          <div class="card" style="margin-bottom:0.75rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <div>
+                <div class="card-title"><i class="ti ti-layout-grid" aria-hidden="true"></i> 選擇主題</div>
+                <div style="font-size:12.5px; color:var(--text-secondary); margin-top:3px;">已選 <span id="picked-count" style="color:var(--accent); font-weight:600;">0</span> / <span id="target-count">8</span> 支</div>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-ghost btn-sm" onclick="backToStep1()"><i class="ti ti-arrow-left" aria-hidden="true"></i> 重新設定</button>
+                <button class="btn btn-primary btn-sm" id="confirm-btn" onclick="confirmTopics()" disabled>確認選題 <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+              </div>
+            </div>
+          </div>
+          <div class="topic-grid" id="topic-grid"></div>
+        </div>
+
+        <!-- WIZARD STEP 3 -->
+        <div id="ws3" style="display:none;">
+          <div class="card" style="margin-bottom:0.75rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <div class="card-title"><i class="ti ti-file-check" aria-hidden="true"></i> 系列大綱</div>
+              <div class="btn-row">
+                <button class="btn btn-ghost btn-sm" onclick="backToStep2()"><i class="ti ti-arrow-left" aria-hidden="true"></i> 重選主題</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportOutlines()"><i class="ti ti-download" aria-hidden="true"></i> 匯出</button>
+              </div>
+            </div>
+          </div>
+          <div id="outline-list"></div>
+        </div>
+      </div>
+
+      <!-- SCRIPT PAGE -->
+      <div class="page" id="page-script">
+        <div class="page-header">
+          <div class="page-title">腳本撰寫</div>
+          <div class="page-desc">Will Tennyson 語氣 × YouTube 留存心理學，自動生成完整腳本</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1rem;"><i class="ti ti-input" aria-hidden="true"></i> 影片資訊</div>
+          <div class="field">
+            <label>影片主題 / 標題方向</label>
+            <input type="text" id="script-topic" placeholder="例：我從健身轉跑步，第一個月發生了什麼事">
+          </div>
+          <div class="field">
+            <label>目標長度</label>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <input type="number" id="script-length-min" placeholder="8" value="8" min="1" max="120" style="width:72px;">
+              <span style="color:var(--text-muted); font-size:13px;">–</span>
+              <input type="number" id="script-length-max" placeholder="12" value="12" min="1" max="120" style="width:72px;">
+              <span style="color:var(--text-secondary); font-size:13px;">分鐘</span>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="chip" onclick="setLength(this,5,8)">5–8 分</button>
+                <button class="chip" onclick="setLength(this,8,12)">8–12 分</button>
+                <button class="chip" onclick="setLength(this,12,18)">12–18 分</button>
+                <button class="chip" onclick="setLength(this,18,25)">18–25 分</button>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>語氣基調（可多選）</label>
+            <div class="chip-group" id="tone-chips"></div>
+            <div class="chip-add-row">
+              <input type="text" id="tone-input" placeholder="自訂語氣" onkeydown="if(event.key==='Enter'){addChip('tone','tone-input');event.preventDefault();}">
+              <button onclick="addChip('tone','tone-input')"><i class="ti ti-plus" aria-hidden="true"></i> 新增</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>核心訊息（觀眾看完的收穫）</label>
+            <textarea id="script-message" rows="2" placeholder="例：不用跑很多，重訓選手靠這 3 件事快速建立跑步基礎"></textarea>
+          </div>
+          <div class="field">
+            <label>關鍵字（逗號分隔）</label>
+            <input type="text" id="script-keywords" placeholder="半馬訓練, 跑步入門, Hyrox">
+          </div>
+          <button class="btn btn-primary" id="gen-script-btn" onclick="generateScript()">
+            <i class="ti ti-sparkles" aria-hidden="true"></i> 生成腳本
+          </button>
+        </div>
+
+        <div id="script-output" style="display:none;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; flex-wrap:wrap; gap:8px;">
+            <div class="card-title"><i class="ti ti-file-text" aria-hidden="true"></i> 生成腳本</div>
+            <div class="btn-row">
+              <span style="font-size:11px; color:var(--text-muted);">一鍵調語氣：</span>
+              <button class="tone-btn active" id="tone-0" onclick="adjustTone(this,'幽默自嘲')">幽默</button>
+              <button class="tone-btn" id="tone-1" onclick="adjustTone(this,'輕鬆紀錄')">輕鬆</button>
+              <button class="tone-btn" id="tone-2" onclick="adjustTone(this,'教學專業')">專業</button>
+              <button class="tone-btn" id="tone-3" onclick="adjustTone(this,'激勵挑戰')">激勵</button>
+            </div>
+          </div>
+          <div id="script-sections"></div>
+
+          <div class="card" style="margin-top:1.25rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+              <div class="card-title"><i class="ti ti-tags" aria-hidden="true"></i> SEO 建議</div>
+              <button class="btn btn-ghost btn-sm" onclick="regenSEO()"><i class="ti ti-refresh" aria-hidden="true"></i> 重新生成</button>
+            </div>
+            <div id="seo-meta-output"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEO PAGE -->
+      <div class="page" id="page-seo">
+        <div class="page-header">
+          <div class="page-title">SEO 關鍵字研究</div>
+          <div class="page-desc">AI 分析台灣 YouTube / Google 搜尋潛力、競爭程度與優化策略</div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="kw-input" placeholder="例：半馬訓練課表、Hyrox 是什麼、跑步入門" style="flex:1;" onkeydown="if(event.key==='Enter') analyzeKeyword()">
+            <button class="btn btn-primary" onclick="analyzeKeyword()"><i class="ti ti-search" aria-hidden="true"></i> 分析</button>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:0.75rem; align-items:center;">
+            <span style="font-size:11.5px; color:var(--text-muted);">快速選詞：</span>
+            <button class="kw-tag" style="cursor:pointer;" onclick="quickKW('半馬訓練')">半馬訓練</button>
+            <button class="kw-tag" style="cursor:pointer;" onclick="quickKW('Hyrox 是什麼')">Hyrox 是什麼</button>
+            <button class="kw-tag" style="cursor:pointer;" onclick="quickKW('跑步入門')">跑步入門</button>
+            <button class="kw-tag" style="cursor:pointer;" onclick="quickKW('心率訓練')">心率訓練</button>
+            <button class="kw-tag" style="cursor:pointer;" onclick="quickKW('配速計算')">配速計算</button>
+          </div>
+        </div>
+
+        <div id="kw-result" style="display:none;"><div class="card"><div id="kw-result-content"></div></div></div>
+        <div id="kw-empty" class="empty">
+          <i class="ti ti-search" aria-hidden="true"></i>
+          <p>輸入關鍵字，分析台灣市場搜尋潛力</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="notif" id="notif"><i class="ti ti-check" aria-hidden="true"></i> <span id="notif-text"></span></div>
+
+<script>
+const API = 'https://api.anthropic.com/v1/messages';
+
+// ── Chip system ──────────────────────────────────────────────
+const CHIP_DEFAULTS = {
+  audience: [
+    { label: '跑步新手', on: true },
+    { label: '健身轉跑步', on: true },
+    { label: 'Hyrox 愛好者', on: true },
+    { label: '20–35 歲上班族', on: true },
+    { label: '情侶運動', on: false },
+    { label: '想開始跑步的人', on: false },
+    { label: '台灣健身圈', on: false },
+  ],
+  style: [
+    { label: '紀錄片式', on: true },
+    { label: '幽默自嘲', on: true },
+    { label: '挑戰記錄', on: false },
+    { label: '教學型', on: false },
+    { label: 'Vlog', on: false },
+  ],
+  level: [
+    { label: '入門友善', on: false },
+    { label: '中階成長', on: true },
+    { label: '高強度挑戰', on: false },
+  ],
+  tone: [
+    { label: '幽默自嘲（Will Tennyson 風）', on: true },
+    { label: '輕鬆紀錄', on: false },
+    { label: '教學專業', on: false },
+    { label: '故事感強', on: false },
+    { label: '激勵挑戰', on: false },
+    { label: '反常識開場', on: false },
+  ],
+};
+const chipData = { audience: [], style: [], level: [], tone: [] };
+
+function initChips() {
+  ['audience', 'style', 'level', 'tone'].forEach(type => {
+    chipData[type] = CHIP_DEFAULTS[type].map(d => ({ ...d }));
+    renderChips(type);
+  });
+}
+
+function setLength(btn, min, max) {
+  document.getElementById('script-length-min').value = min;
+  document.getElementById('script-length-max').value = max;
+}
+
+function renderChips(type) {
+  const container = document.getElementById(type + '-chips');
+  container.innerHTML = chipData[type].map((c, i) => `
+    <button class="chip ${c.on ? 'selected' : ''}" onclick="toggleChip('${type}',${i})">
+      ${c.label}
+      <span class="chip-remove" onclick="removeChip(event,'${type}',${i})">×</span>
+    </button>
+  `).join('');
+}
+
+function toggleChip(type, i) {
+  chipData[type][i].on = !chipData[type][i].on;
+  renderChips(type);
+}
+
+function removeChip(e, type, i) {
+  e.stopPropagation();
+  chipData[type].splice(i, 1);
+  renderChips(type);
+}
+
+function addChip(type, inputId) {
+  const input = document.getElementById(inputId);
+  const val = input.value.trim();
+  if (!val) return;
+  if (chipData[type].find(c => c.label === val)) { showNotif('已有這個選項'); return; }
+  chipData[type].push({ label: val, on: true });
+  input.value = '';
+  renderChips(type);
+}
+
+function getSelected(type) {
+  return chipData[type].filter(c => c.on).map(c => c.label);
+}
+
+// ── Claude API ───────────────────────────────────────────────
+async function callClaude(prompt, system = '') {
+  const body = { model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] };
+  if (system) body.system = system;
+  const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) throw new Error('API error ' + res.status);
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+function parseJSON(raw) {
+  return JSON.parse(raw.replace(/```json|```/g, '').trim());
+}
+
+// ── Nav ──────────────────────────────────────────────────────
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+}
+
+// ── Steps ────────────────────────────────────────────────────
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const s = document.getElementById('step' + i);
+    s.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+}
+
+// ── State ────────────────────────────────────────────────────
+let pickedTopics = [], allTopics = [], targetCount = 8, currentScript = null;
+
+// ── SERIES Step 1 → 2 ────────────────────────────────────────
+async function generateTopics() {
+  const title = document.getElementById('challenge-title').value.trim() || '備戰半馬';
+  targetCount = parseInt(document.getElementById('video-count').value) || 8;
+  const duration = document.getElementById('series-duration').value.trim() || '12 週';
+  const audience = getSelected('audience').join('、') || '跑步愛好者';
+  const style = getSelected('style').join('、') || '紀錄片式';
+  const level = getSelected('level').join('、') || '中階';
+  const usp = document.getElementById('usp').value.trim();
+
+  const btn = document.getElementById('gen-topics-btn');
+  btn.innerHTML = '<span class="spinner"></span> 生成中…'; btn.disabled = true;
+
+  const WILL_STYLE = `Will Tennyson 的語氣特徵：自我調侃、誇張但不假、把痛苦講得很好笑、對觀眾說話像在跟朋友抱怨、偶爾爆粗口但不失質感、結果出乎意料時有強烈的反應。台灣版本：用這個骨子裡的幽默感，但講中文、講台灣人的日常場景。`;
+
+  const prompt = `你是 YouTube 頻道策略師。為「${title}」系列生成 ${targetCount + 3} 個主題（多給幾個讓創作者選）。
+
+${WILL_STYLE}
+
+創作者資訊：
+- 個人特色：${usp}
+- 系列週期：${duration}
+- 目標族群：${audience}
+- 風格：${style}（${level}）
+
+要求：
+1. 每個主題都要有強烈的「理由觀看」（好奇缺口 / 反常識 / 具體數字 / 個人故事）
+2. 鉤子要有 Will Tennyson 那種自嘲感或反差感
+3. 涵蓋不同面向：開始、掙扎、轉折、技術面、身體反應、心態、最終結果
+
+回傳純 JSON（不加任何 markdown）：
+{"topics":[{"tag":"主題類型","title":"影片標題","hook":"開場鉤子（15字內）","desc":"拍攝方向（50字內）"}]}`;
+
+  try {
+    const raw = await callClaude(prompt, '只回傳純 JSON，不加 markdown 或任何其他文字。');
+    const parsed = parseJSON(raw);
+    allTopics = parsed.topics;
+    pickedTopics = [];
+    document.getElementById('target-count').textContent = targetCount;
+    renderTopics();
+    document.getElementById('ws1').style.display = 'none';
+    document.getElementById('ws2').style.display = 'block';
+    setStep(2);
+  } catch(e) {
+    showNotif('生成失敗：' + e.message);
+    console.error(e);
+  } finally {
+    btn.innerHTML = '<i class="ti ti-sparkles"></i> 生成主題清單'; btn.disabled = false;
+  }
+}
+
+function renderTopics() {
+  document.getElementById('topic-grid').innerHTML = allTopics.map((t, i) => `
+    <div class="topic-card ${pickedTopics.includes(i) ? 'picked' : ''}" onclick="pickTopic(${i})">
+      <div class="pick-badge"><i class="ti ti-check"></i></div>
+      <div class="topic-tag">${t.tag}</div>
+      <div class="topic-title">${t.title}</div>
+      <div class="topic-hook" style="margin-bottom:4px;">🎬 「${t.hook}」</div>
+      <div class="topic-hook">${t.desc}</div>
+    </div>
+  `).join('');
+  updatePickCount();
+}
+
+function pickTopic(i) {
+  if (pickedTopics.includes(i)) { pickedTopics = pickedTopics.filter(x => x !== i); }
+  else {
+    if (pickedTopics.length >= targetCount) { showNotif(`最多選 ${targetCount} 支`); return; }
+    pickedTopics.push(i);
+  }
+  renderTopics();
+}
+
+function updatePickCount() {
+  document.getElementById('picked-count').textContent = pickedTopics.length;
+  document.getElementById('confirm-btn').disabled = pickedTopics.length < 1;
+}
+
+function backToStep1() {
+  document.getElementById('ws2').style.display = 'none';
+  document.getElementById('ws1').style.display = 'block';
+  pickedTopics = []; setStep(1);
+}
+
+function backToStep2() {
+  document.getElementById('ws3').style.display = 'none';
+  document.getElementById('ws2').style.display = 'block';
+  setStep(2);
+}
+
+// ── SERIES Step 2 → 3 ────────────────────────────────────────
+async function confirmTopics() {
+  if (!pickedTopics.length) return;
+  const btn = document.getElementById('confirm-btn');
+  btn.innerHTML = '<span class="spinner"></span> 生成大綱…'; btn.disabled = true;
+
+  const selected = pickedTopics.map(i => allTopics[i]);
+  const challenge = document.getElementById('challenge-title').value;
+  const usp = document.getElementById('usp').value;
+
+  const prompt = `你是 YouTube 腳本策略師。風格參考：Will Tennyson（自嘲、幽默、有力道的鉤子）。
+
+為「${challenge}」系列的 ${selected.length} 支影片各生成拍攝大綱。
+創作者特色：${usp}
+
+影片：
+${selected.map((t, i) => `EP${i+1}. ${t.title}`).join('\n')}
+
+每支需包含：hook（開場鉤子，15字內，要有 Will Tennyson 那種誇張自嘲感）、why_watch（一句話說為什麼看到最後）、sections（3–4個段落，各有 title 和 direction）、cta（結尾行動呼籲）。
+
+回傳純 JSON：
+{"outlines":[{"ep":1,"title":"","hook":"","why_watch":"","sections":[{"title":"","direction":""}],"cta":""}]}`;
+
+  try {
+    const raw = await callClaude(prompt, '只回傳純 JSON。');
+    const parsed = parseJSON(raw);
+    renderOutlines(parsed.outlines, selected);
+    document.getElementById('ws2').style.display = 'none';
+    document.getElementById('ws3').style.display = 'block';
+    setStep(3);
+  } catch(e) {
+    showNotif('大綱生成失敗：' + e.message);
+    console.error(e);
+  } finally {
+    btn.innerHTML = '確認選題 <i class="ti ti-arrow-right"></i>'; btn.disabled = false;
+  }
+}
+
+function renderOutlines(outlines, selected) {
+  document.getElementById('outline-list').innerHTML = outlines.map((o, idx) => `
+    <div class="card" style="margin-bottom:0.75rem;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+        <div>
+          <span class="badge badge-accent" style="margin-bottom:6px; display:inline-flex;">EP${o.ep}</span>
+          <div style="font-size:15px; font-weight:500; line-height:1.4;">${o.title || (selected[idx]?.title || '')}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadToScript('${encodeURIComponent(o.title||'')}')">
+          <i class="ti ti-file-plus" aria-hidden="true"></i> 開始寫腳本
+        </button>
+      </div>
+      <div style="background:var(--surface2); border-radius:8px; padding:0.85rem; margin-bottom:0.75rem; border-left:3px solid var(--accent);">
+        <div class="script-block-label">開場鉤子</div>
+        <div style="font-size:13.5px;">「${o.hook}」</div>
+      </div>
+      <div style="background:var(--surface2); border-radius:8px; padding:0.85rem; margin-bottom:0.75rem; border-left:3px solid var(--amber);">
+        <div class="script-block-label" style="color:var(--amber);">為什麼看到最後</div>
+        <div style="font-size:13.5px;">${o.why_watch}</div>
+      </div>
+      ${(o.sections||[]).map(s => `
+        <div class="outline-segment">
+          <div class="segment-title">${s.title}</div>
+          <div class="segment-dir">${s.direction}</div>
+        </div>`).join('')}
+      <div style="padding-top:0.75rem; font-size:12.5px; color:var(--text-secondary);">
+        <span style="color:var(--green); font-weight:500;">CTA：</span>${o.cta}
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadToScript(encodedTitle) {
+  document.getElementById('script-topic').value = decodeURIComponent(encodedTitle);
+  switchPage('script');
+}
+
+function exportOutlines() {
+  const blob = new Blob([document.getElementById('outline-list').innerText], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '系列大綱.txt'; a.click();
+  showNotif('已匯出');
+}
+
+// ── SCRIPT ───────────────────────────────────────────────────
+const WILL = `Will Tennyson 語氣指引：像在跟朋友抱怨自己做了多蠢的決定、把痛苦講得很好笑、自我調侃但不矯情、數字要具體、結果要有反差感。台灣版本：中文、高雄/台灣日常場景、跑步健身圈的術語。`;
+
+async function generateScript() {
+  const topic = document.getElementById('script-topic').value.trim();
+  if (!topic) { showNotif('請輸入影片主題'); return; }
+  const lenMin = document.getElementById('script-length-min').value || '8';
+  const lenMax = document.getElementById('script-length-max').value || '12';
+  const length = lenMin === lenMax ? `${lenMin} 分鐘` : `${lenMin}–${lenMax} 分鐘`;
+  const tones = getSelected('tone');
+  const tone = tones.length ? tones.join('、') : '幽默自嘲';
+  const message = document.getElementById('script-message').value;
+  const keywords = document.getElementById('script-keywords').value;
+
+  const btn = document.getElementById('gen-script-btn');
+  btn.innerHTML = '<span class="spinner"></span> 生成中…'; btn.disabled = true;
+
+  const prompt = `你是 YouTube 腳本撰寫專家。
+
+${WILL}
+
+創作者：Solo（台灣人、NID 認證跑步教練、健身轉跑步、Hyrox 選手、在高雄）
+主題：${topic}
+長度：${length}，語氣：${tone}
+核心訊息：${message}
+關鍵字：${keywords}
+
+腳本五段（YouTube 心理學）：
+1. HOOK 前15秒：製造好奇缺口，不直接說答案，用 Will 那種「我做了一個很蠢的決定」開場
+2. SETUP：為什麼 Solo 做這件事，建立個人連結，要讓人有共鳴
+3. MAIN：3–4個核心段落，每段結尾留一個小懸念
+4. CLIMAX：最重要的洞見或結果，要有反差感
+5. CTA：引導訂閱/留言/下一集，要自然不要硬賣
+
+回傳純 JSON：
+{"sections":[{"id":"hook","label":"開場鉤子（0–15秒）","content":""},{"id":"setup","label":"背景設定","content":""},{"id":"main","label":"主要內容","content":""},{"id":"climax","label":"高潮與洞見","content":""},{"id":"cta","label":"結尾 CTA","content":""}],"seo":{"titles":["","",""],"description":"","tags":["","","","","","","",""]}}`;
+
+  try {
+    const raw = await callClaude(prompt, '只回傳純 JSON。');
+    currentScript = parseJSON(raw);
+    renderScript(currentScript);
+    document.getElementById('script-output').style.display = 'block';
+    document.getElementById('script-output').scrollIntoView({ behavior: 'smooth' });
+  } catch(e) {
+    showNotif('生成失敗：' + e.message); console.error(e);
+  } finally {
+    btn.innerHTML = '<i class="ti ti-sparkles"></i> 生成腳本'; btn.disabled = false;
+  }
+}
+
+const BLOCK_COLORS = { hook: 'var(--accent)', setup: '#7b61ff', main: 'var(--amber)', climax: 'var(--green)', cta: '#06b6d4' };
+
+function renderScript(data) {
+  document.getElementById('script-sections').innerHTML = (data.sections||[]).map(s => `
+    <div class="script-block" style="border-left-color:${BLOCK_COLORS[s.id]||'var(--accent)'}; margin-bottom:0.75rem;">
+      <div class="script-block-label" style="color:${BLOCK_COLORS[s.id]||'var(--accent)'};">${s.label}</div>
+      <div class="script-text" contenteditable="true">${s.content}</div>
+    </div>
+  `).join('');
+  renderSEOMeta(data.seo);
+}
+
+function renderSEOMeta(seo) {
+  if (!seo) return;
+  document.getElementById('seo-meta-output').innerHTML = `
+    <div style="margin-bottom:1rem;">
+      <div class="section-label">建議標題（選一個）</div>
+      ${(seo.titles||[]).map(t => `
+        <div class="seo-title-row">
+          <span style="font-size:13px;">${t}</span>
+          <button class="btn btn-ghost btn-sm" onclick="copyText(\`${t.replace(/`/g,'\\`')}\`)"><i class="ti ti-copy" aria-hidden="true"></i></button>
+        </div>`).join('')}
+    </div>
+    <div style="margin-bottom:1rem;">
+      <div class="section-label">影片描述</div>
+      <div style="padding:0.75rem; background:var(--surface2); border-radius:var(--radius); font-size:13px; color:var(--text-secondary); line-height:1.7;">${seo.description||''}</div>
+    </div>
+    <div>
+      <div class="section-label">Tags</div>
+      <div class="tag-wrap">${(seo.tags||[]).map(t=>`<span class="kw-tag">${t}</span>`).join('')}</div>
+    </div>`;
+}
+
+async function adjustTone(btn, tone) {
+  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const originalText = btn.textContent;
+  btn.textContent = '…'; btn.disabled = true;
+
+  const currentText = document.getElementById('script-sections').innerText;
+  const prompt = `將以下腳本調整為「${tone}」語氣。${tone === '幽默自嘲' ? WILL : ''}
+保持所有內容和結構不變，只改變說話方式。
+回傳純 JSON：{"sections":[{"id":"hook","label":"開場鉤子（0–15秒）","content":""},{"id":"setup","label":"背景設定","content":""},{"id":"main","label":"主要內容","content":""},{"id":"climax","label":"高潮與洞見","content":""},{"id":"cta","label":"結尾 CTA","content":""}]}
+
+原腳本：\n${currentText}`;
+
+  try {
+    const raw = await callClaude(prompt, '只回傳純 JSON。');
+    const parsed = parseJSON(raw);
+    if (currentScript) currentScript.sections = parsed.sections;
+    renderScript({ sections: parsed.sections, seo: currentScript?.seo });
+    showNotif(`語氣已調整為「${tone}」`);
+  } catch(e) { showNotif('調整失敗'); }
+  finally { btn.textContent = originalText; btn.disabled = false; }
+}
+
+async function regenSEO() {
+  const topic = document.getElementById('script-topic').value;
+  const keywords = document.getElementById('script-keywords').value;
+  try {
+    const raw = await callClaude(
+      `台灣 YouTube 影片 SEO 建議。主題：${topic}，關鍵字：${keywords}\n回傳純 JSON：{"titles":["","",""],"description":"","tags":["","","","","","","",""]}`,
+      '只回傳純 JSON。'
+    );
+    renderSEOMeta(parseJSON(raw));
+    showNotif('SEO 已更新');
+  } catch(e) { showNotif('更新失敗'); }
+}
+
+// ── SEO PAGE ─────────────────────────────────────────────────
+function quickKW(kw) { document.getElementById('kw-input').value = kw; analyzeKeyword(); }
+
+async function analyzeKeyword() {
+  const kw = document.getElementById('kw-input').value.trim();
+  if (!kw) return;
+  document.getElementById('kw-empty').style.display = 'none';
+  document.getElementById('kw-result-content').innerHTML = '<div style="text-align:center;padding:2rem;"><span class="spinner" style="width:22px;height:22px;border-color:rgba(255,255,255,0.15);border-top-color:var(--accent);"></span></div>';
+  document.getElementById('kw-result').style.display = 'block';
+
+  const prompt = `你是台灣 YouTube / Google SEO 專家。分析「${kw}」在台灣市場的搜尋潛力（數據為 AI 估算，請標注）。
+回傳純 JSON：{"keyword":"${kw}","score":75,"score_label":"中高潛力","volume_est":"月搜尋估計","competition":"中","competition_color":"amber","opportunity":"高","opportunity_color":"green","related":[{"kw":"","note":""},{"kw":"","note":""},{"kw":"","note":""},{"kw":"","note":""}],"title_suggestions":["","",""],"strategy":"50字以內的建議"}`;
+
+  try {
+    const d = parseJSON(await callClaude(prompt, '只回傳純 JSON。'));
+    const cc = d.competition_color === 'green' ? 'var(--green)' : d.competition_color === 'amber' ? 'var(--amber)' : 'var(--accent)';
+    const oc = d.opportunity_color === 'green' ? 'var(--green)' : d.opportunity_color === 'amber' ? 'var(--amber)' : 'var(--accent)';
+    const sc = d.score >= 70 ? 'var(--green)' : d.score >= 50 ? 'var(--amber)' : 'var(--accent)';
+
+    document.getElementById('kw-result-content').innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:18px;font-weight:600;">「${d.keyword}」</div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">* 數據為 AI 估算，供策略參考</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="font-size:30px;font-weight:700;color:${sc};">${d.score}</div>
+          <div style="font-size:11.5px;color:var(--text-secondary);">潛力分<br>${d.score_label}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-bottom:1rem;">
+        ${[['搜尋量',d.volume_est,'var(--text)'],['競爭',d.competition,cc],['機會',d.opportunity,oc]].map(([l,v,c])=>`
+          <div style="background:var(--surface2);border-radius:var(--radius);padding:0.65rem;text-align:center;">
+            <div style="font-size:10.5px;color:var(--text-muted);margin-bottom:3px;">${l}</div>
+            <div style="font-size:13px;font-weight:600;color:${c};">${v}</div>
+          </div>`).join('')}
+      </div>
+      <div style="margin-bottom:1rem;">
+        <div class="section-label">相關關鍵字</div>
+        ${(d.related||[]).map(r=>`
+          <div class="kw-row">
+            <div><div class="kw-name">${r.kw}</div><div style="font-size:11.5px;color:var(--text-muted);">${r.note}</div></div>
+            <button class="btn btn-ghost btn-sm" onclick="quickKW('${r.kw}')">分析</button>
+          </div>`).join('')}
+      </div>
+      <div style="margin-bottom:1rem;">
+        <div class="section-label">建議標題</div>
+        ${(d.title_suggestions||[]).map(t=>`
+          <div class="seo-title-row">
+            <span style="font-size:13px;">${t}</span>
+            <button class="btn btn-ghost btn-sm" onclick="copyText(\`${t.replace(/`/g,'\\`')}\`)"><i class="ti ti-copy" aria-hidden="true"></i></button>
+          </div>`).join('')}
+      </div>
+      <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius);padding:0.75rem;">
+        <div style="font-size:11.5px;color:var(--accent);margin-bottom:3px;font-weight:500;">策略建議</div>
+        <div style="font-size:13px;color:var(--text-secondary);">${d.strategy}</div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('kw-result-content').innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>分析失敗，請再試</p></div>';
+  }
+}
+
+// ── Utils ────────────────────────────────────────────────────
+function copyText(text) { navigator.clipboard.writeText(text).then(() => showNotif('已複製')); }
+
+function showNotif(msg) {
+  document.getElementById('notif-text').textContent = msg;
+  const n = document.getElementById('notif'); n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 2500);
+}
+
+// ── Init ─────────────────────────────────────────────────────
+initChips();
+</script>
+</body>
+</html>
